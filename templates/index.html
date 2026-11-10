@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotelOps AI | Operations Assistant</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f5f8;
+            color: #202b3c;
+        }
+
+        header {
+            background: #14283f;
+            color: white;
+            padding: 25px 8%;
+        }
+
+        header h1 { margin: 0; font-size: 27px; }
+        header p { margin: 8px 0 0; color: #cbd7e5; }
+
+        main {
+            max-width: 950px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .welcome, .assistant, .examples {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 18px #17283f0d;
+        }
+
+        h2 { margin-top: 0; }
+
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .examples button {
+            background: #edf3f8;
+            color: #24425e;
+            border: 1px solid #d8e2ec;
+            padding: 10px 13px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            padding: 14px;
+            border: 1px solid #ccd5df;
+            border-radius: 9px;
+            font: inherit;
+            resize: vertical;
+        }
+
+        .run {
+            background: #176b59;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 13px 22px;
+            margin-top: 14px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:disabled { opacity: .6; cursor: wait; }
+
+        #output {
+            display: none;
+            background: #f0f7f5;
+            border-left: 4px solid #176b59;
+            padding: 18px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        #status { color: #64748b; margin-top: 12px; }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #738096;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>HotelOps AI</h1>
+    <p>Your smart assistant for everyday hotel operations</p>
+</header>
+
+<main>
+    <section class="welcome">
+        <h2>Welcome to HotelOps AI</h2>
+        <p>
+            Manage housekeeping, calculate register transactions,
+            create shift reports, and organize daily hotel tasks
+            using simple instructions.
+        </p>
+    </section>
+
+    <section class="assistant">
+        <h2>What can I help you with?</h2>
+        <textarea id="message"
+            placeholder="Example: I have 18 rooms and 3 housekeepers. Divide the rooms equally."></textarea>
+
+        <button class="run" id="runButton" onclick="runAgent()">
+            Run AI Agent
+        </button>
+
+        <p id="status"></p>
+        <div id="output"></div>
+    </section>
+
+    <section>
+        <h3>Try an example</h3>
+        <div class="examples">
+            <button onclick="useExample('I have 18 rooms and 3 housekeepers. Divide the rooms equally.')">
+                Housekeeping assignments
+            </button>
+
+            <button onclick="useExample('I started with $300, received $100 for a $55 charge. Calculate the expected register balance.')">
+                Register calculation
+            </button>
+
+            <button onclick="useExample('Create a shift report saying the front desk computer stopped working today.')">
+                Create shift report
+            </button>
+
+            <button onclick="useExample('Create a folder called Maintenance.')">
+                Create a folder
+            </button>
+
+            <button onclick="useExample('Show me all the saved files.')">
+                View saved files
+            </button>
+        </div>
+    </section>
+</main>
+
+<footer>
+    HotelOps AI · AI-powered hotel operations assistant
+</footer>
+
+<script>
+    function useExample(text) {
+        document.getElementById("message").value = text;
+    }
+
+    async function runAgent() {
+        const message = document.getElementById("message").value.trim();
+        const button = document.getElementById("runButton");
+        const status = document.getElementById("status");
+        const output = document.getElementById("output");
+
+        if (!message) {
+            status.textContent = "Please enter a request first.";
+            return;
+        }
+
+        button.disabled = true;
+        status.textContent = "HotelOps AI is thinking and working...";
+        output.style.display = "none";
+
+        try {
+            const response = await fetch("/run", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+
+            output.style.display = "block";
+
+            if (!response.ok) {
+                output.textContent = data.error || "Something went wrong.";
+                status.textContent = "Request could not be completed.";
+            } else {
+                status.textContent = "Action completed successfully.";
+                output.textContent =
+                    "AI ACTION: " + data.action + "\n\n" +
+                    data.message + "\n\n" +
+                    data.result;
+            }
+        } catch (error) {
+            status.textContent = "Could not connect to HotelOps AI.";
+            output.style.display = "block";
+            output.textContent = error.message;
+        } finally {
+            button.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
